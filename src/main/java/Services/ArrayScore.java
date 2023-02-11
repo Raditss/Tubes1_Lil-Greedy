@@ -15,6 +15,10 @@ public class ArrayScore {
         }
     }
 
+    public void setNth(int index, double value) {
+        this.arrayScore.set(index, value);
+    }
+
     public void increment(int index, double value) {
         this.arrayScore.set(index, this.arrayScore.get(index) + value);
     }

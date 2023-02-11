@@ -11,6 +11,33 @@ public class Direction {
         return ((degree + value) % 360 + 360) % 360;
     }
 
+    static public double distanceToEdge(int degree, GameObject player, double radius) {
+        double m = Math.tan(degree);
+        double lineB = player.getPosition().getY() - m * player.getPosition().getX();
+
+        double a = Math.pow(m, 2) + 1;
+        double b = 2 * m * lineB;
+        double c = Math.pow(lineB, 2) - Math.pow(radius, 2);
+        double discriminant = Math.pow(b, 2) - 4 * a * c;
+        if (discriminant < 0) {
+            System.out.println("NaN detected\n");
+        }
+
+        double firstPointX = (-b + Math.sqrt(discriminant)) / (2 * a);
+        double firstPointY = m * firstPointX + lineB;
+
+        double secondPointX = (-b - Math.sqrt(discriminant)) / (2 * a);
+        double secondPointY = m * secondPointX + lineB;
+
+        double playerXDistanceToFirst = player.getPosition().getX() - firstPointX;
+        double secondXDistanceToFirst = secondPointX - firstPointX;
+
+        double intersectionDistance = Math
+                .sqrt(Math.pow(secondPointY - firstPointY, 2) + Math.pow((secondPointX - firstPointX), 2));
+        return intersectionDistance * playerXDistanceToFirst / secondXDistanceToFirst;
+
+    }
+
     static public boolean inTrajectory(int degree, GameObject player, GameObject gameObject) {
         double a = Math.sin(degree);
         double b = -1 * Math.cos(degree);
@@ -52,6 +79,13 @@ public class Direction {
                 frontAngle = angleIncrementor(frontAngle, 1);
             }
         }
+
+        for (int i = 0; i < 360; i++) {
+            if (distanceToEdge(i, player, worldRadius) <= Config.Movement.minimumDistanceToEdge + player.getSize()) {
+                directionScore.setNth(i, 0);
+            }
+        }
+
         return directionScore.getBestScore();
     }
 }

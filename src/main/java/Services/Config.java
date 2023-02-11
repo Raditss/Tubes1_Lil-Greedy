@@ -24,7 +24,7 @@ public class Config {
     }
 
     static public class Movement {
-        static public double centerAffinity = 100;
+        static public double minimumDistanceToEdge = 1;
         static public double minimumRatioToEat = 1.1;
 
         static public class Affinity {
