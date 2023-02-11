@@ -18,11 +18,10 @@ public class Direction {
         double distance = (a * gameObject.getPosition().getX() + b * gameObject.getPosition().getY() + c)
                 / Math.sqrt(Math.pow(a, 2) + Math.pow(b, 2));
         return distance - gameObject.getSize() <= player.getSize();
-
     }
 
-    static public Pair<Integer, Double> bestAngle(List<GameObject> gameObjects, GameObject player) {
-        DirectionScore directionScore = new DirectionScore();
+    static public Pair<Integer, Double> bestAngle(List<GameObject> gameObjects, GameObject player, double worldRadius) {
+        ArrayScore directionScore = new ArrayScore(360);
         for (int i = 0; i < gameObjects.size(); i++) {
             GameObject gameObject = gameObjects.get(i);
             double distanceX = gameObject.getPosition().getX() - player.getPosition().getX();
@@ -30,15 +29,14 @@ public class Direction {
             double rawAngle = Math.atan(distanceY / distanceX);
             int angle = (int) Math.round((rawAngle > 0 ? rawAngle : (2 * Math.PI + rawAngle)) * 360 / (2 * Math.PI));
 
-            // Insert the incrementation value here
-            directionScore.increment(angle, 0);
+            directionScore.increment(angle, Config.Movement.directionAffinity(gameObject, player));
 
             boolean inTheBackAngle = true;
             int backAngle = angle - 1;
             while (inTheBackAngle) {
                 inTheBackAngle = inTrajectory(backAngle, player, gameObject);
                 if (inTheBackAngle) {
-                    directionScore.increment(backAngle, Config.Movement.distanceFunction(gameObject, player));
+                    directionScore.increment(backAngle, Config.Movement.directionAffinity(gameObject, player));
                 }
                 backAngle = angleIncrementor(backAngle, -1);
             }
@@ -49,7 +47,7 @@ public class Direction {
                 // Insert the incrementation value here
                 inTheFrontAngle = inTrajectory(frontAngle, player, gameObject);
                 if (inTheFrontAngle) {
-                    directionScore.increment(backAngle, Config.Movement.distanceFunction(gameObject, player));
+                    directionScore.increment(backAngle, Config.Movement.directionAffinity(gameObject, player));
                 }
                 frontAngle = angleIncrementor(frontAngle, 1);
             }
