@@ -34,21 +34,23 @@ public class Direction {
             directionScore.increment(angle, 0);
 
             boolean inTheBackAngle = true;
-            int backAngle = angle;
+            int backAngle = angle - 1;
             while (inTheBackAngle) {
                 inTheBackAngle = inTrajectory(backAngle, player, gameObject);
-                // Insert the incrementation value here
-                directionScore.increment(backAngle, 0);
+                if (inTheBackAngle) {
+                    directionScore.increment(backAngle, Config.Movement.distanceFunction(gameObject, player));
+                }
                 backAngle = angleIncrementor(backAngle, -1);
-
             }
 
             boolean inTheFrontAngle = true;
-            int frontAngle = angle;
+            int frontAngle = angle + 1;
             while (inTheFrontAngle) {
                 // Insert the incrementation value here
-                inTheBackAngle = inTrajectory(frontAngle, player, gameObject);
-                directionScore.increment(frontAngle, 0);
+                inTheFrontAngle = inTrajectory(frontAngle, player, gameObject);
+                if (inTheFrontAngle) {
+                    directionScore.increment(backAngle, Config.Movement.distanceFunction(gameObject, player));
+                }
                 frontAngle = angleIncrementor(frontAngle, 1);
             }
         }

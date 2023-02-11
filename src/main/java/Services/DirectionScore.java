@@ -15,7 +15,7 @@ public class DirectionScore {
         }
     }
 
-    public void increment(int index, int value) {
+    public void increment(int index, double value) {
         this.directionScore.set(index, this.directionScore.get(index) + value);
     }
 
