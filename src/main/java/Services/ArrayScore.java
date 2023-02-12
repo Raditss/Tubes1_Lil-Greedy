@@ -8,10 +8,14 @@ import Services.DataStructure.Pair;
 public class ArrayScore {
     private List<Double> arrayScore;
 
+    ArrayScore() {
+        arrayScore = new ArrayList<Double>();
+    }
+
     ArrayScore(int length) {
-        arrayScore = new ArrayList<Double>(length);
+        arrayScore = new ArrayList<Double>();
         for (int i = 0; i < length; i++) {
-            arrayScore.set(i, 0.0);
+            arrayScore.add(0.0);
         }
     }
 

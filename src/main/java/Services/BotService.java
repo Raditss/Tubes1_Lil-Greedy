@@ -113,9 +113,16 @@ public class BotService {
                         // .comparing(item -> getDistanceBetween(bot, item)))
                         // .collect(Collectors.toList());
 
-                        Pair<Integer, Double> bestHeading = Direction.bestAngle(gameState.getGameObjects(), bot,
+                        Pair<Integer, Double> bestTarget = Shooting.ShootingTarget(playerList, bot);
+                        Pair<Integer, Double> bestDirection = Direction.bestAngle(gameState.getGameObjects(), bot,
                                         gameState.getWorld().getRadius());
-                        playerAction.heading = bestHeading.getFirst();
+                        if (bestDirection.getFirst() * Config.offensiveRatio > bestTarget.getFirst()) {
+                                playerAction.action = PlayerActions.FORWARD;
+                                playerAction.heading = bestDirection.getFirst();
+                        } else {
+                                playerAction.heading = bestTarget.getFirst();
+                                playerAction.action = PlayerActions.FIRETORPEDOES;
+                        }
                 }
 
                 this.playerAction = playerAction;

@@ -29,9 +29,9 @@ public class Config {
 
         static public class Affinity {
             static public double player = -10.0;
-            static public double food = 10.0;
+            static public double food = 40.0;
             static public double wormhole = -10.0;
-            static public double gasCloud = -10.0;
+            static public double gasCloud = -1000.0;
             static public double asteroidField = -10.0;
             static public double torpedoSalvo = -5.0;
             static public double superFood = 50.0;
@@ -55,43 +55,55 @@ public class Config {
                     } else {
                         affinityConstant = Affinity.player * sizeRatio;
                     }
+                    result = affinityConstant;
                     break;
                 case ASTEROIDFIELD:
                     affinityConstant = Affinity.asteroidField;
+                    result = affinityConstant / distance;
                     break;
                 case FOOD:
                     affinityConstant = Affinity.food;
+                    result = affinityConstant / distance;
                     break;
                 case GASCLOUD:
                     affinityConstant = Affinity.gasCloud;
+                    result = affinityConstant / distance;
                     break;
                 case SHIELD:
                     affinityConstant = Affinity.shield;
+                    result = affinityConstant / distance;
                     break;
                 case SUPERFOOD:
                     affinityConstant = Affinity.superFood;
+                    result = affinityConstant / distance;
                     break;
                 case SUPERNOVABOMB:
                     affinityConstant = Affinity.supernovaBomb;
+                    result = affinityConstant / distance;
                     break;
                 case SUPERNOVAPICKUP:
                     affinityConstant = Affinity.supernovaPickup;
+                    result = affinityConstant / distance;
                     break;
                 case TELEPORTER:
                     affinityConstant = Affinity.teleporter;
+                    result = affinityConstant / distance;
+
                     break;
                 case TORPEDOSALVO:
                     affinityConstant = Affinity.torpedoSalvo;
+                    result = affinityConstant / distance;
                     break;
                 case WORMHOLE:
                     affinityConstant = Affinity.wormhole;
+                    result = affinityConstant / distance;
                     break;
                 default:
                     affinityConstant = Affinity.food;
+                    result = affinityConstant / distance;
                     break;
             }
 
-            result = affinityConstant / Math.pow(distance, 2);
             return result;
         }
     }

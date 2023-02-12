@@ -53,13 +53,14 @@ public class Direction {
             GameObject gameObject = gameObjects.get(i);
             double distanceX = gameObject.getPosition().getX() - player.getPosition().getX();
             double distanceY = gameObject.getPosition().getY() - player.getPosition().getY();
-            double rawAngle = Math.atan(distanceY / distanceX);
-            int angle = (int) Math.round((rawAngle > 0 ? rawAngle : (2 * Math.PI + rawAngle)) * 360 / (2 * Math.PI));
+            double rawAngle = Math.atan2(distanceY, distanceX);
+            int angle = (int) angleIncrementor(
+                    (int) Math.round((rawAngle > 0 ? rawAngle : (2 * Math.PI + rawAngle)) * 360 / (2 * Math.PI)), 0);
 
             directionScore.increment(angle, Config.Movement.directionAffinity(gameObject, player));
 
             boolean inTheBackAngle = true;
-            int backAngle = angle - 1;
+            int backAngle = angleIncrementor(angle, -1);
             while (inTheBackAngle) {
                 inTheBackAngle = inTrajectory(backAngle, player, gameObject);
                 if (inTheBackAngle) {
@@ -69,7 +70,7 @@ public class Direction {
             }
 
             boolean inTheFrontAngle = true;
-            int frontAngle = angle + 1;
+            int frontAngle = angleIncrementor(angle, 1);
             while (inTheFrontAngle) {
                 // Insert the incrementation value here
                 inTheFrontAngle = inTrajectory(frontAngle, player, gameObject);
