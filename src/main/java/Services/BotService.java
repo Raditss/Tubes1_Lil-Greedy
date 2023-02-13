@@ -36,10 +36,23 @@ public class BotService {
         public void computeNextPlayerAction(PlayerAction playerAction) {
                 playerAction.action = PlayerActions.FORWARD;
                 playerAction.heading = new Random().nextInt(360);
+                System.out.println("Bot is ticking\n");
 
                 if (!gameState.getGameObjects().isEmpty()) {
                         List<GameObject> playerList = gameState.getGameObjects()
                                         .stream().filter(item -> item.getGameObjectType() == ObjectTypes.PLAYER)
+                                        .sorted(Comparator
+                                                        .comparing(item -> Utils.getDistanceBetween(bot, item)))
+                                        .collect(Collectors.toList());
+
+                        List<GameObject> hostileObjectList = gameState.getGameObjects()
+                                        .stream().filter(item -> Config.Movement.isHostile(item, this.bot))
+                                        .sorted(Comparator
+                                                        .comparing(item -> Utils.getDistanceBetween(bot, item)))
+                                        .collect(Collectors.toList());
+                        List<GameObject> foodList = gameState.getGameObjects()
+                                        .stream()
+                                        .filter(item -> Config.Movement.isFood(item, this.bot))
                                         .sorted(Comparator
                                                         .comparing(item -> Utils.getDistanceBetween(bot, item)))
                                         .collect(Collectors.toList());
@@ -113,16 +126,64 @@ public class BotService {
                         // .comparing(item -> getDistanceBetween(bot, item)))
                         // .collect(Collectors.toList());
 
-                        Pair<Integer, Double> bestTarget = Shooting.ShootingTarget(playerList, bot);
-                        Pair<Integer, Double> bestDirection = Direction.bestAngle(gameState.getGameObjects(), bot,
-                                        gameState.getWorld().getRadius());
-                        if (bestDirection.getFirst() * Config.offensiveRatio > bestTarget.getFirst()) {
-                                playerAction.action = PlayerActions.FORWARD;
-                                playerAction.heading = bestDirection.getFirst();
-                        } else {
-                                playerAction.heading = bestTarget.getFirst();
-                                playerAction.action = PlayerActions.FIRETORPEDOES;
+                        // Pair<Integer, Double> bestTarget = Shooting.ShootingTarget(playerList, bot);
+
+                        double distanceToMid = getDistanceBetween(new Position(0, 0));
+                        double distanceToEdge = gameState.getWorld().getRadius() - distanceToMid - this.bot.getSize();
+                        boolean hostileNearby = false;
+                        boolean edgeNearby = distanceToEdge < Config.Movement.maximumDistanceToEdge;
+                        int i = 0;
+
+                        int headingToCenter = getHeadingBetween(new Position(0, 0));
+                        int headingToEdge = (((180 + headingToCenter) % 360) + 360) % 360;
+
+                        while (i < hostileObjectList.size() && !hostileNearby) {
+                                GameObject object = hostileObjectList.get(i);
+                                hostileNearby = Utils.getDistanceBetween(object,
+                                                this.bot) - object.getSize() <= Config.safeRadius;
+                                i++;
                         }
+
+                        if (hostileNearby) {
+                                System.out.println("Hostile nearby");
+                                List<GameObject> hostileNearbyList = hostileObjectList.stream()
+                                                .filter(item -> Utils.getDistanceBetween(item,
+                                                                this.bot) - item.getSize() < Config.safeRadius)
+                                                .collect(Collectors.toList());
+                                System.out.println(hostileNearbyList.size());
+                                Integer degreeDirection = edgeNearby ? Direction.bestAngle(
+                                                hostileNearbyList,
+                                                this.bot,
+                                                gameState.getWorld().getRadius(), headingToEdge).getFirst()
+                                                : Direction.bestAngle(
+                                                                hostileNearbyList,
+                                                                this.bot,
+                                                                gameState.getWorld().getRadius()).getFirst();
+                                if (degreeDirection == null) {
+                                        playerAction.setAction(PlayerActions.ACTIVATESHIELD);
+                                } else {
+                                        playerAction.setHeading(degreeDirection);
+                                        playerAction.setAction(PlayerActions.FORWARD);
+
+                                }
+                                System.out.println(degreeDirection);
+                        } else if (edgeNearby) {
+                                playerAction.setHeading(headingToCenter);
+                                playerAction.setAction(PlayerActions.FORWARD);
+                        } else {
+                                System.out.println("Food nearby");
+                                List<GameObject> foodNearbyList = foodList.stream()
+                                                .filter(item -> Utils.getDistanceBetween(item,
+                                                                this.bot) - item.getSize() < Config.foodRadius)
+                                                .collect(Collectors.toList());
+                                System.out.println(foodNearbyList.size());
+                                GameObject foodToGet = foodNearbyList
+                                                .get(Direction.bestFoodIndex(foodNearbyList, this.bot));
+                                System.out.println(foodToGet.getGameObjectType());
+                                playerAction.setHeading(getHeadingBetween(foodToGet));
+                                playerAction.setAction(PlayerActions.FORWARD);
+                        }
+
                 }
 
                 this.playerAction = playerAction;
@@ -149,4 +210,20 @@ public class BotService {
                                                 otherObject.getPosition().x - bot.getPosition().x)));
                 return (direction + 360) % 360;
         }
+
+        private int getHeadingBetween(Position otherPos) {
+                int direction = (int) (long) Math
+                                .round(Utils.toDegrees(Math.atan2(otherPos.getY() - bot.getPosition().y,
+                                                otherPos.getX() - bot.getPosition().getX())));
+                return (direction + 360) % 360;
+        }
+
+        private double getDistanceBetween(GameObject otherObject) {
+                return Utils.getDistanceBetween(this.bot, otherObject);
+        }
+
+        private double getDistanceBetween(Position otherPos) {
+                return Utils.getDistanceBetween(this.bot.getPosition(), otherPos);
+        }
+
 }

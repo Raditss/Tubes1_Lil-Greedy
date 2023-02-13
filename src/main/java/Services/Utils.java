@@ -5,8 +5,8 @@ import Models.Position;
 
 public class Utils {
     static public double getDistanceBetween(GameObject object1, GameObject object2) {
-        double triangleX = Math.abs(object1.getPosition().x - object2.getPosition().x);
-        double triangleY = Math.abs(object1.getPosition().y - object2.getPosition().y);
+        double triangleX = Math.abs(object1.getPosition().getX() - object2.getPosition().getX());
+        double triangleY = Math.abs(object1.getPosition().getY() - object2.getPosition().getY());
         return Math.sqrt(triangleX * triangleX + triangleY * triangleY);
     }
 

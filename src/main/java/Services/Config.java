@@ -5,6 +5,10 @@ import Models.GameObject;
 public class Config {
     // Ratio of how offensive over how defensive the bot is
     static public double offensiveRatio = 1.1;
+    // The radius in which hostile objects will be detected
+    static public double safeRadius = 200;
+    // The radius in which food are considered to be eaten
+    static public double foodRadius = 200;
 
     static public class ShootingPlayer {
         static public class Salvo {
@@ -24,14 +28,18 @@ public class Config {
     }
 
     static public class Movement {
-        static public double minimumDistanceToEdge = 1;
-        static public double minimumRatioToEat = 1.1;
+        static public double maximumDistanceToEdge = 10;
+        // The lowest ratio between enemy's size and our size for them to be
+        // considered hostile
+        // Below this ratio they aren't hostile
+        static public double hostilePlayerSizeRatio = 1;
 
         static public class Affinity {
-            static public double player = -10.0;
+            static public double biggerPlayer = -10.0;
+            static public double smallerPlayer = 100.0;
             static public double food = 40.0;
-            static public double wormhole = -10.0;
-            static public double gasCloud = -1000.0;
+            static public double wormhole = -1.0;
+            static public double gasCloud = -10.0;
             static public double asteroidField = -10.0;
             static public double torpedoSalvo = -5.0;
             static public double superFood = 50.0;
@@ -39,6 +47,53 @@ public class Config {
             static public double supernovaBomb = 50.0;
             static public double teleporter = 10.0;
             static public double shield = 10.0;
+        }
+
+        static public boolean isHostile(GameObject item, GameObject us) {
+            boolean result;
+            switch (item.getGameObjectType()) {
+                case GASCLOUD:
+                    result = true;
+                    break;
+                case SUPERNOVABOMB:
+                    result = true;
+                    break;
+                case TORPEDOSALVO:
+                    result = true;
+                    break;
+                case ASTEROIDFIELD:
+                    result = true;
+                    break;
+                case WORMHOLE:
+                    result = true;
+                    break;
+                case PLAYER:
+                    result = (item.getSize() / us.getSize()) >= hostilePlayerSizeRatio;
+                    break;
+                default:
+                    result = false;
+                    break;
+            }
+            return result;
+        }
+
+        static public boolean isFood(GameObject item, GameObject us) {
+            boolean result;
+            switch (item.getGameObjectType()) {
+                case FOOD:
+                    result = true;
+                    break;
+                case SUPERFOOD:
+                    result = true;
+                    break;
+                case PLAYER:
+                    result = (item.getSize() / us.getSize()) < hostilePlayerSizeRatio;
+                    break;
+                default:
+                    result = false;
+                    break;
+            }
+            return result;
         }
 
         static double directionAffinity(GameObject gameObject, GameObject player) {
@@ -50,53 +105,49 @@ public class Config {
                 case PLAYER:
                     // Size ratio between the player and the bot
                     double sizeRatio = gameObject.getSize() / player.getSize();
-                    if (sizeRatio < minimumRatioToEat) {
-                        affinityConstant = -Affinity.player * Math.pow(sizeRatio, 2);
+                    if (sizeRatio >= hostilePlayerSizeRatio) {
+                        result = Affinity.biggerPlayer;
                     } else {
-                        affinityConstant = Affinity.player * sizeRatio;
+                        result = Affinity.smallerPlayer / sizeRatio / Math.sqrt(distance);
                     }
-                    result = affinityConstant;
                     break;
                 case ASTEROIDFIELD:
                     affinityConstant = Affinity.asteroidField;
-                    result = affinityConstant / distance;
+                    result = affinityConstant;
                     break;
                 case FOOD:
-                    affinityConstant = Affinity.food;
-                    result = affinityConstant / distance;
+                    result = Affinity.food / Math.sqrt(distance);
                     break;
                 case GASCLOUD:
                     affinityConstant = Affinity.gasCloud;
-                    result = affinityConstant / distance;
+                    result = affinityConstant;
                     break;
                 case SHIELD:
                     affinityConstant = Affinity.shield;
-                    result = affinityConstant / distance;
+                    result = affinityConstant;
                     break;
                 case SUPERFOOD:
-                    affinityConstant = Affinity.superFood;
-                    result = affinityConstant / distance;
+                    result = Affinity.superFood / Math.sqrt(distance);
                     break;
                 case SUPERNOVABOMB:
                     affinityConstant = Affinity.supernovaBomb;
-                    result = affinityConstant / distance;
+                    result = affinityConstant;
                     break;
                 case SUPERNOVAPICKUP:
                     affinityConstant = Affinity.supernovaPickup;
-                    result = affinityConstant / distance;
+                    result = affinityConstant;
                     break;
                 case TELEPORTER:
                     affinityConstant = Affinity.teleporter;
-                    result = affinityConstant / distance;
-
+                    result = affinityConstant;
                     break;
                 case TORPEDOSALVO:
                     affinityConstant = Affinity.torpedoSalvo;
-                    result = affinityConstant / distance;
+                    result = affinityConstant;
                     break;
                 case WORMHOLE:
                     affinityConstant = Affinity.wormhole;
-                    result = affinityConstant / distance;
+                    result = affinityConstant;
                     break;
                 default:
                     affinityConstant = Affinity.food;
