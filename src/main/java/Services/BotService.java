@@ -59,7 +59,7 @@ public class BotService {
                     .sorted(Comparator
                             .comparing(item -> getDistanceBetween(bot, item)))
                     .collect(Collectors.toList());
-                    System.out.println("playerList: " + playerList);
+                    System.out.println("enemies: " + playerList.size());
 
             var gasCloudList = gameState.getGameObjects()
                     .stream().filter(item -> item.getGameObjectType() == ObjectTypes.GASCLOUD)
