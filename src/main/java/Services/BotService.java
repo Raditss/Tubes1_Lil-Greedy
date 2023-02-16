@@ -6,10 +6,6 @@ import Models.*;
 import java.util.*;
 import java.util.stream.*;
 
-import javax.swing.plaf.synth.SynthOptionPaneUI;
-
-import com.ctc.wstx.shaded.msv_core.reader.State;
-
 public class BotService {
     private GameObject bot;
     private PlayerAction playerAction;
@@ -19,7 +15,6 @@ public class BotService {
         this.playerAction = new PlayerAction();
         this.gameState = new GameState();
     }
-
 
     public GameObject getBot() {
         return this.bot;
@@ -37,7 +32,7 @@ public class BotService {
         this.playerAction = playerAction;
     }
 
-    static boolean attack_next = false;
+    /* Set up variabel yang mungkin dibutuhkan */
     static boolean continueFood = false;
     static boolean haveTeleporter = false;
     static boolean myTeleporter = false;
@@ -49,11 +44,6 @@ public class BotService {
         playerAction.heading = new Random().nextInt(360);
 
         if (!gameState.getGameObjects().isEmpty()) {
-            var foodList = gameState.getGameObjects()
-                    .stream().filter(item -> item.getGameObjectType() == ObjectTypes.FOOD)
-                    .sorted(Comparator
-                            .comparing(item -> getDistanceBetween(bot, item)))
-                    .collect(Collectors.toList());
 
             var foodNotNearEdgeList = this.gameState.getGameObjects()
                 .stream().filter(item -> (item.getGameObjectType() == ObjectTypes.FOOD || 
@@ -71,12 +61,6 @@ public class BotService {
                     .collect(Collectors.toList());
                     System.out.println("playerList: " + playerList);
 
-            var wormholeList = gameState.getGameObjects()
-                    .stream().filter(item -> item.getGameObjectType() == ObjectTypes.WORMHOLE)
-                    .sorted(Comparator
-                            .comparing(item -> getDistanceBetween(bot, item)))
-                    .collect(Collectors.toList());
-
             var gasCloudList = gameState.getGameObjects()
                     .stream().filter(item -> item.getGameObjectType() == ObjectTypes.GASCLOUD)
                     .sorted(Comparator
@@ -89,32 +73,8 @@ public class BotService {
                             .comparing(item -> getDistanceBetween(bot, item)))
                     .collect(Collectors.toList());
 
-            var superFoodList = gameState.getGameObjects()
-                    .stream().filter(item -> item.getGameObjectType() == ObjectTypes.SUPERFOOD)
-                    .sorted(Comparator
-                            .comparing(item -> getDistanceBetween(bot, item)))
-                    .collect(Collectors.toList());
-
-            var supernovaPickupList = gameState.getGameObjects()
-                    .stream().filter(item -> item.getGameObjectType() == ObjectTypes.SUPERNOVAPICKUP)
-                    .sorted(Comparator
-                            .comparing(item -> getDistanceBetween(bot, item)))
-                    .collect(Collectors.toList());
-
-            var supernovaBombList = gameState.getGameObjects()
-                    .stream().filter(item -> item.getGameObjectType() == ObjectTypes.SUPERNOVABOMB)
-                    .sorted(Comparator
-                            .comparing(item -> getDistanceBetween(bot, item)))
-                    .collect(Collectors.toList());
-
             var teleporterList = gameState.getGameObjects()
                     .stream().filter(item -> item.getGameObjectType() == ObjectTypes.TELEPORTER)
-                    .sorted(Comparator
-                            .comparing(item -> getDistanceBetween(bot, item)))
-                    .collect(Collectors.toList());
-
-            var shieldList = gameState.getGameObjects()
-                    .stream().filter(item -> item.getGameObjectType() == ObjectTypes.SHIELD)
                     .sorted(Comparator
                             .comparing(item -> getDistanceBetween(bot, item)))
                     .collect(Collectors.toList());
@@ -125,17 +85,26 @@ public class BotService {
                             .comparing(item -> getDistanceBetween(bot, item)))
                     .collect(Collectors.toList());
 
+            /* Untuk print tick saat ini */
             var ticker = gameState.getWorld().getCurrentTick();
-            
             System.out.println("Tick: " + ticker);
 
-
+            /* Mendapatkan nilai radius dari map saat ini */
             var bordeRadius = gameState.world.getRadius();
+
+            /* Mendapatkan posisi tengah dari map */
             Position mid = new Position(0,0);
+
+            /* Membuat game object yang berposisi di tengah map */
             GameObject dummy = new GameObject(null, null, null, null, mid, null);
+
+            /* Mendapatkan jarak bot ke tengah */
             var botToMid = getDistanceBetween(this.bot, dummy);
+
+            /* Mendapatkan jarak player terdekat */
             var nearestPlayer = getDistanceBetween(this.bot, playerList.get(0));
 
+            /* Melakukan pengecekan dan mendapatkan jarak dan heading pada gas cloud */
             double gasDist;
             int headGas;
             if (gasCloudList.size() > 0){
@@ -146,6 +115,7 @@ public class BotService {
                 headGas = -1;
             }
 
+            /* Melakukan pengecekan dan mendapatkan jarak dan heading pada asteroid field */
             double asteDist;
             int headAster;
             if (asteroidFieldList.size() > 0){
@@ -156,9 +126,12 @@ public class BotService {
                 headAster = -1;
             }
 
+            /* Melakukan printing info ke layar */
             var headPlayer = getHeadingBetween(playerList.get(0));
             System.out.println("rd: " + gameState.getWorld().getRadius() + " Gs: " + gasDist + " As: " + asteDist + " Pl: " + nearestPlayer + " Md: " + botToMid + " sz: " + this.bot.size); 
             var headMid = getHeadingBetween(dummy);
+
+            /* Melakukan pengecekan dan mendapatkan jarak dan heading pada makanan */
             double foodFarEdgeDist = 99999;
             int foodFarEdgeHead = -1;
             if (foodNotNearEdgeList.size() > 0){
@@ -168,15 +141,24 @@ public class BotService {
                 foodFarEdgeDist = 99999;
             }
 
+            /* Mendapatkan ukuran dari bot */
             var botsize = this.bot.size;
+
+            /* Mendapatkan ukuran dari musuh terdekat */
             var enemySize = playerList.get(0).size;
+
+            /* Membuat boolean untuk memastikan bot hanya melakukan satu aksi */
             boolean done = false;
+
+            /* Membuat boolean untuk pengecekan apakah bot harus teleport */
             boolean shouldTeleport = false;
 
+            /* Melakukan pengecekan apakah ada teleporter di map */
             if (teleporterList.size() == 0){
                 haveTeleporter = false;
             }
 
+            /* Membuat kondisi penembakan teleported */
             if (botsize > 150 && !haveTeleporter){
                 System.out.println("Bot sent teleporter!");
                 playerAction.heading = getHeadingBetween(playerList.get(0));
@@ -187,6 +169,7 @@ public class BotService {
                 int j;
                 int k = 0;
                 shouldTeleport = true;
+                /* Mendapatkan kondisi teleporter, jika berbahaya maka bot tidak akan teleport */
                 for (j = 0; (j < teleporterList.size()) && (!done); j++){
                     while (k < playerList.size()){
                         if ((getDistanceBetween(teleporterList.get(j), playerList.get(k)) < 100 + 1.2 * playerList.get(k).size) && (playerList.get(k).size > botsize)){
@@ -199,7 +182,9 @@ public class BotService {
                     }
                     
                 }
-                for (j = 0; (j < teleporterList.size()) && (!done); j++){
+
+                /* Mendapatkan kondisi teleporter apabila bot aman untuk teleport */
+                for (j = 0; (j < teleporterList.size()) && (!done) && (shouldTeleport); j++){
                     k = 0;
                     while (k < playerList.size() && !done){
                         if (shouldTeleport && (getDistanceBetween(teleporterList.get(j), playerList.get(k)) < 100 + 1.2 * playerList.get(k).size) && (playerList.get(k).size < botsize)){
@@ -215,20 +200,22 @@ public class BotService {
                 }    
 
             } else {
-                // do nothing (bot kurang dari 100)
+                // do nothing
             }
 
-
+            /* Melakukan pengecekan apakah bot harus menghindari torpedo */
             if ((!done) && (torpedoSalvoList.size() > 0)){
                 var salvoDist = getDistanceBetween(this.bot, torpedoSalvoList.get(0));
                 var headSalvo = getHeadingBetween(torpedoSalvoList.get(0));
                 System.out.println("Salvo: " + salvoDist + " Head: " + headSalvo);
                 if ((salvoDist < 100 + 1.2 * botsize) && (botsize > 100)){
+                    /* Jika bot berukuran besar dan ada peluru mendekat maka bot akan mengaktifkan shield */
                     System.out.println("Bot is activating shield!");
                     playerAction.heading = foodFarEdgeHead;
                     playerAction.action = PlayerActions.ACTIVATESHIELD;
                     done = true;
                 } else if (salvoDist < 100 + 1.2 * botsize){
+                    /* Jika bot berukuran kecil dan ada peluru mendekat maka bot akan melarikan diri dari peluru */
                     System.out.println("Bot is running from salvo!");
                     playerAction.heading = headSalvo + 120;
                     playerAction.action = PlayerActions.FORWARD;
@@ -238,40 +225,50 @@ public class BotService {
                 }
             }
 
+            /* Jika kondisi teleporter atau defending belum memberikan aksi maka akan masuk ke kondisional di bawah */
             if (!done){
                 if (botsize > 150){
+                    /* Jika ukuran bot sudah terlalu besar maka bot akan menembak musuh terdekat */
                     System.out.println("Bot is attacking because too fat!");
                     playerAction.action = PlayerActions.FIRETORPEDOES;
                     playerAction.heading = headPlayer;
                 } else if ((nearestPlayer < 150 + 4 * enemySize) && (enemySize < botsize) && (enemySize > 0.2 * botsize) && (botsize > 40)){
+                    /* Bot akan menembak dengan kondisi tertentu */
                     System.out.println("Bot is attacking!");
                     playerAction.action = PlayerActions.FIRETORPEDOES;
                     playerAction.heading = headPlayer;
                 } else if ((nearestPlayer < 150 + 4 * enemySize) && (enemySize < botsize)){
+                    /* Bot mendekat ke musuh yang lebih kecil */
                     System.out.println("Bot is just chasing weak enemy!");
                     playerAction.action = PlayerActions.FORWARD;
                     playerAction.heading = headPlayer;
                 } else if ((nearestPlayer < 150 + 4 * enemySize) && (botsize > 0.4 * enemySize) && (botsize > 40)){
+                    /* Bot berani melawan musuh yang sedikit lebih besar dari dirinya */
                     System.out.println("Bot is not scared at all!");
                     playerAction.action = PlayerActions.FIRETORPEDOES;
                     playerAction.heading = headPlayer;
-                } else if (nearestPlayer < 150 + 4 * enemySize){
+                } else if (nearestPlayer < 150 + 2 * enemySize){
+                    /* Bot melarikan diri dari musuh yang terlalu besar */
                     System.out.println("Bot is running for his life!");
                     playerAction.action = PlayerActions.FORWARD;
                     playerAction.heading = (headPlayer + 120) % 360;
                 } else if (bordeRadius < botToMid + 1.3 * botsize){
+                    /* Bot menghindar dari border dan menuju ke tengah */
                     System.out.println("Bot is running from border!");
                     playerAction.heading = headMid;
                     playerAction.action = PlayerActions.FORWARD;
                 } else if (gasDist < 100 + 1.2 * botsize){
+                    /* Bot berbelok menghindari gas cloud */
                     System.out.println("Bot is running from gass");
                     playerAction.heading = (headGas + 120) % 360;
                     playerAction.action = PlayerActions.FORWARD;
                 } else if (asteDist < 100 + 1.2 * botsize){
+                    /* Bot berbelok menghindari asteroid */
                     System.out.println("Bot is running from asteroid");
                     playerAction.heading = (headAster + 120) % 360;
                     playerAction.action = PlayerActions.FORWARD;
                 } else if ((nearestPlayer > enemySize + 250) && (foodNotNearEdgeList.size() > 0) && (foodFarEdgeDist < 400 + 5 * botsize)){
+                    /* Mencari posisi makanan terdekat yang ada di dalam border */
                     int i;
                     for (i = 0; i < foodNotNearEdgeList.size(); i++){
                         if (getDistanceBetween(this.bot, foodNotNearEdgeList.get(i)) > 1.3 * botsize + gameState.getWorld().getRadius()){
@@ -281,19 +278,23 @@ public class BotService {
                         }
                     }
                     if (i == foodNotNearEdgeList.size()){
+                        /* Jika makanan terdekat ada di luar border maka bot akan menuju ke tengah */
                         System.out.println("Bot is running from food!");
                         playerAction.heading = headMid;
                         playerAction.action = PlayerActions.FORWARD;
                     } else {
+                        /* Jika makanan terdekat masih ada di dalam border maka bot akan memakannya */
                         System.out.println("Bot is eating food!");
                         playerAction.heading = getHeadingBetween(foodNotNearEdgeList.get(i));
                         playerAction.action = PlayerActions.FORWARD;
                     }
                 } else if (foodFarEdgeDist > 500){
+                    /* Jika posisi makanan terdekat terlalu jauh maka bot akan menuju ke tengah */
                     System.out.println("Bot is going to mid!");
                     playerAction.action = PlayerActions.FORWARD;
                     playerAction.heading = headMid;
                 } else {
+                    /* Jika tidak ada kondisi di atas maka bot akan memakan makanan terdekat */
                     System.out.println("Bot is now eating");
                     playerAction.action = PlayerActions.FORWARD;
                     playerAction.heading = foodFarEdgeHead;
